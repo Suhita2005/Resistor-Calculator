@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resistor Color Code Calculator</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .welcome-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .welcome-card {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .welcome-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #2563eb;
+    }
+
+    .welcome-text {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      color: #4b5563;
+    }
+
+    .welcome-button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .welcome-button:hover {
+      background-color: #1d4ed8;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    .container {
+      min-height: 100%;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .instructions {
+      font-size: 1rem;
+      margin: 0;
+      opacity: 0.8;
+    }
+
+    .resistor-container {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .resistor-visual {
+      position: relative;
+      height: 80px;
+      background: linear-gradient(to bottom, #d4a574 0%, #c49563 50%, #d4a574 100%);
+      border-radius: 8px;
+      margin: 2rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 20px;
+    }
+
+    .resistor-lead {
+      position: absolute;
+      height: 3px;
+      background: #888;
+      width: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .resistor-lead.left {
+      left: -40px;
+    }
+
+    .resistor-lead.right {
+      right: -40px;
+    }
+
+    .color-band {
+      width: 20px;
+      height: 60px;
+      border-radius: 2px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .color-band.multiplier {
+      margin-left: 12px;
+    }
+
+    .color-band.tolerance {
+      margin-left: 20px;
+    }
+
+    .selector-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .selector-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .color-button {
+      padding: 0.75rem;
+      border: 2px solid transparent;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: center;
+      min-width: 80px;
+      margin: 0.25rem;
+    }
+
+    .color-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .color-button.selected {
+      border-color: #333;
+      box-shadow: 0 0 0 3px rgba(51, 51, 51, 0.2);
+    }
+
+    .result-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.7);
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      max-width: 90%;
+      width: 400px;
+      color: white;
+    }
+
+    .result-popup.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .result-popup .result-label {
+      font-size: 1.2rem;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .result-popup .result-value {
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 1rem 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .result-popup .tolerance-info {
+      font-size: 1.1rem;
+      margin-top: 1rem;
+      color: rgba(255, 255, 255, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 1rem;
+    }
+
+    .result-popup .close-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: background 0.3s ease;
+    }
+
+    .result-popup .close-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .result-box {
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      text-align: center;
+      margin-top: 1.5rem;
+      display: none;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="welcome-overlay" id="welcome-overlay">
+    <div class="welcome-card">
+      <h1 class="welcome-title">Welcome to Resistor Calculator</h1>
+      <p class="welcome-text">
+        This interactive tool helps you decode resistor color bands and calculate resistance values quickly and accurately. 
+        Perfect for electronics enthusiasts, students, and professionals.
+        <br><br>
+        Simply select the colors of each band on your resistor, and we'll show you the resistance value and tolerance!
+      </p>
+      <button class="welcome-button" onclick="dismissWelcome()">Get Started</button>
+    </div>
+  </div>
+  <div class="container">
+   <div class="header">
+    <h1 class="title" id="title">Resistor Color Code Calculator</h1>
+    <p class="instructions" id="instructions">Select colors for each band to calculate resistance</p>
+   </div>
+   <div class="resistor-container">
+    <div class="resistor-visual">
+     <div class="resistor-lead left"></div>
+     <div class="color-band" id="band1"></div>
+     <div class="color-band" id="band2"></div>
+     <div class="color-band multiplier" id="band3"></div>
+     <div class="color-band tolerance" id="band4"></div>
+     <div class="resistor-lead right"></div>
+    </div>
+    <div class="selector-group"><label class="selector-label">First Band (1st Digit)</label>
+     <div class="color-grid" id="band1-selector"></div>
+    </div>
+    <div class="selector-group"><label class="selector-label">Second Band (2nd Digit)</label>
+     <div class="color-grid" id="band2-selector"></div>
+    </div>
+    <div class="selector-group"><label class="selector-label">Multiplier Band</label>
+     <div class="color-grid" id="band3-selector"></div>
+    </div>
+    <div class="selector-group"><label class="selector-label">Tolerance Band</label>
+     <div class="color-grid" id="band4-selector"></div>
+    </div>
+    <div class="result-box" id="result-box">
+     <p class="result-label">Resistance Value</p>
+     <div class="result-value" id="result-value">
+      Select all bands
+     </div>
+     <p class="tolerance-info" id="tolerance-info">-</p>
+    </div>
+    <div class="result-popup" id="result-popup">
+      <button class="close-button" onclick="closeResultPopup()">×</button>
+      <p class="result-label">Calculated Resistance</p>
+      <div class="result-value" id="popup-result-value">
+        Select all bands
+      </div>
+      <p class="tolerance-info" id="popup-tolerance-info">-</p>
+    </div>
+   </div>
+  </div>
+  <script>
+    const colorData = {
+      digit: [
+        { name: 'Black', value: 0, color: '#000000' },
+        { name: 'Brown', value: 1, color: '#8B4513' },
+        { name: 'Red', value: 2, color: '#FF0000' },
+        { name: 'Orange', value: 3, color: '#FF8C00' },
+        { name: 'Yellow', value: 4, color: '#FFFF00' },
+        { name: 'Green', value: 5, color: '#008000' },
+        { name: 'Blue', value: 6, color: '#0000FF' },
+        { name: 'Violet', value: 7, color: '#8B00FF' },
+        { name: 'Gray', value: 8, color: '#808080' },
+        { name: 'White', value: 9, color: '#FFFFFF' }
+      ],
+      multiplier: [
+        { name: 'Black', value: 1, color: '#000000' },
+        { name: 'Brown', value: 10, color: '#8B4513' },
+        { name: 'Red', value: 100, color: '#FF0000' },
+        { name: 'Orange', value: 1000, color: '#FF8C00' },
+        { name: 'Yellow', value: 10000, color: '#FFFF00' },
+        { name: 'Green', value: 100000, color: '#008000' },
+        { name: 'Blue', value: 1000000, color: '#0000FF' },
+        { name: 'Violet', value: 10000000, color: '#8B00FF' },
+        { name: 'Gold', value: 0.1, color: '#FFD700' },
+        { name: 'Silver', value: 0.01, color: '#C0C0C0' }
+      ],
+      tolerance: [
+        { name: 'Brown', value: 1, color: '#8B4513' },
+        { name: 'Red', value: 2, color: '#FF0000' },
+        { name: 'Gold', value: 5, color: '#FFD700' },
+        { name: 'Silver', value: 10, color: '#C0C0C0' }
+      ]
+    };
+
+    let selectedColors = {
+      band1: null,
+      band2: null,
+      band3: null,
+      band4: null
+    };
+
+    const defaultConfig = {
+      background_color: '#f0f4f8',
+      surface_color: '#ffffff',
+      text_color: '#1a202c',
+      primary_action_color: '#3b82f6',
+      result_background_color: '#e0f2fe',
+      font_family: 'Inter',
+      font_size: 16,
+      title_text: 'Resistor Color Code Calculator',
+      instruction_text: 'Select colors for each band to calculate resistance'
+    };
+
+    function createColorButton(colorInfo, bandId, type) {
+      const button = document.createElement('button');
+      button.className = 'color-button';
+      button.style.backgroundColor = colorInfo.color;
+      button.style.color = getContrastColor(colorInfo.color);
+      button.textContent = colorInfo.name;
+
+      // Set button click handler
+      button.onclick = () => {
+        // Update selected color
+        selectedColors[bandId] = colorInfo;
+        
+        // Remove selected class from all buttons in this band
+        const selector = document.getElementById(`${bandId}-selector`);
+        selector.querySelectorAll('.color-button').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked button
+        button.classList.add('selected');
+        
+        // Update the visual resistor and calculate new value
+        updateVisual();
+        calculateResistance();
+      };
+
+      return button;
+    }
+
+    function getContrastColor(hexColor) {
+      const r = parseInt(hexColor.substr(1, 2), 16);
+      const g = parseInt(hexColor.substr(3, 2), 16);
+      const b = parseInt(hexColor.substr(5, 2), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    }
+
+    function updateSelectors() {
+      // Get all selector elements
+      const band1Selector = document.getElementById('band1-selector');
+      const band2Selector = document.getElementById('band2-selector');
+      const band3Selector = document.getElementById('band3-selector');
+      const band4Selector = document.getElementById('band4-selector');
+
+      // Clear existing content
+      band1Selector.innerHTML = '';
+      band2Selector.innerHTML = '';
+      band3Selector.innerHTML = '';
+      band4Selector.innerHTML = '';
+
+      // First band (skip black as it can't be first digit)
+      colorData.digit.slice(1).forEach(color => {
+        const button = createColorButton(color, 'band1', 'digit');
+        if (selectedColors.band1 && selectedColors.band1.name === color.name) {
+          button.classList.add('selected');
+        }
+        band1Selector.appendChild(button);
+      });
+
+      // Second band (all digits allowed)
+      colorData.digit.forEach(color => {
+        const button = createColorButton(color, 'band2', 'digit');
+        if (selectedColors.band2 && selectedColors.band2.name === color.name) {
+          button.classList.add('selected');
+        }
+        band2Selector.appendChild(button);
+      });
+
+      // Multiplier band
+      colorData.multiplier.forEach(color => {
+        const button = createColorButton(color, 'band3', 'multiplier');
+        if (selectedColors.band3 && selectedColors.band3.name === color.name) {
+          button.classList.add('selected');
+        }
+        band3Selector.appendChild(button);
+      });
+
+      // Tolerance band
+      colorData.tolerance.forEach(color => {
+        const button = createColorButton(color, 'band4', 'tolerance');
+        if (selectedColors.band4 && selectedColors.band4.name === color.name) {
+          button.classList.add('selected');
+        }
+        band4Selector.appendChild(button);
+      });
+    }
+
+    function updateVisual() {
+      document.getElementById('band1').style.backgroundColor = selectedColors.band1.color;
+      document.getElementById('band2').style.backgroundColor = selectedColors.band2.color;
+      document.getElementById('band3').style.backgroundColor = selectedColors.band3.color;
+      document.getElementById('band4').style.backgroundColor = selectedColors.band4.color;
+    }
+
+    function showResultPopup() {
+      const popup = document.getElementById('result-popup');
+      popup.classList.add('show');
+    }
+
+    function closeResultPopup() {
+      const popup = document.getElementById('result-popup');
+      popup.classList.remove('show');
+    }
+
+    function calculateResistance() {
+      if (!selectedColors.band1 || !selectedColors.band2 || !selectedColors.band3 || !selectedColors.band4) {
+        document.getElementById('result-value').textContent = 'Select all bands';
+        document.getElementById('popup-result-value').textContent = 'Select all bands';
+        document.getElementById('tolerance-info').textContent = '-';
+        document.getElementById('popup-tolerance-info').textContent = '-';
+        return;
+      }
+
+      const digit1 = selectedColors.band1.value;
+      const digit2 = selectedColors.band2.value;
+      const multiplier = selectedColors.band3.value;
+      const tolerance = selectedColors.band4.value;
+
+      const baseValue = (digit1 * 10 + digit2) * multiplier;
+      
+      let displayValue;
+      if (baseValue >= 1000000) {
+        displayValue = (baseValue / 1000000).toFixed(2) + ' MΩ';
+      } else if (baseValue >= 1000) {
+        displayValue = (baseValue / 1000).toFixed(2) + ' kΩ';
+      } else {
+        displayValue = baseValue.toFixed(2) + ' Ω';
+      }
+
+      document.getElementById('result-value').textContent = displayValue;
+      document.getElementById('popup-result-value').textContent = displayValue;
+      document.getElementById('tolerance-info').textContent = `±${tolerance}% tolerance`;
+      document.getElementById('popup-tolerance-info').textContent = `±${tolerance}% tolerance`;
+
+      // Show popup when all bands are selected
+      if (selectedColors.band1 && selectedColors.band2 && 
+          selectedColors.band3 && selectedColors.band4) {
+        showResultPopup();
+      }
+    }
+
+    function dismissWelcome() {
+      const welcomeOverlay = document.getElementById('welcome-overlay');
+      welcomeOverlay.style.opacity = '0';
+      welcomeOverlay.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        welcomeOverlay.style.display = 'none';
+      }, 500);
+    }
+
+    async function onConfigChange(config) {
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const baseSize = config.font_size || defaultConfig.font_size;
+
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.background = config.background_color || defaultConfig.background_color;
+
+      const container = document.querySelector('.container');
+      container.style.color = config.text_color || defaultConfig.text_color;
+
+      const title = document.getElementById('title');
+      title.textContent = config.title_text || defaultConfig.title_text;
+      title.style.fontSize = `${baseSize * 2}px`;
+      title.style.color = config.text_color || defaultConfig.text_color;
+
+      const instructions = document.getElementById('instructions');
+      instructions.textContent = config.instruction_text || defaultConfig.instruction_text;
+      instructions.style.fontSize = `${baseSize}px`;
+      instructions.style.color = config.text_color || defaultConfig.text_color;
+
+      const resistorContainer = document.querySelector('.resistor-container');
+      resistorContainer.style.background = config.surface_color || defaultConfig.surface_color;
+
+      const labels = document.querySelectorAll('.selector-label');
+      labels.forEach(label => {
+        label.style.fontSize = `${baseSize * 0.9}px`;
+        label.style.color = config.text_color || defaultConfig.text_color;
+      });
+
+      const resultBox = document.getElementById('result-box');
+      resultBox.style.background = config.result_background_color || defaultConfig.result_background_color;
+
+      const resultValue = document.getElementById('result-value');
+      resultValue.style.fontSize = `${baseSize * 2}px`;
+      resultValue.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+
+      const resultLabel = document.querySelector('.result-label');
+      resultLabel.style.fontSize = `${baseSize * 0.9}px`;
+      resultLabel.style.color = config.text_color || defaultConfig.text_color;
+
+      const toleranceInfo = document.getElementById('tolerance-info');
+      toleranceInfo.style.fontSize = `${baseSize * 0.85}px`;
+      toleranceInfo.style.color = config.text_color || defaultConfig.text_color;
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.result_background_color || defaultConfig.result_background_color,
+              set: (value) => {
+                config.result_background_color = value;
+                window.elementSdk.setConfig({ result_background_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['title_text', config.title_text || defaultConfig.title_text],
+          ['instruction_text', config.instruction_text || defaultConfig.instruction_text]
+        ])
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateSelectors();
+      calculateResistance();
+    });
+  </script>
+ </body>
+</html>
